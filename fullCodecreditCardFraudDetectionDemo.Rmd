@@ -1,0 +1,398 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+ 
+
+```{r}
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(imbalance)
+library(class)
+```
+My Goal is to detect credit cart Fraud 
+Problem is Class imbalance
+Over sampling
+-Majority Weighted Minority Oversampling TEchnique
+Under sampling
+SMOTE
+Testing
+
+```{r}
+df <- fread('creditcard.csv',header=T)
+df$Class <- factor(df$Class)
+
+```
+```{r}
+head(df)
+```
+```{r}
+summary(df$Class)
+```
+```{r}
+is.na(df) %>% any
+```
+```{r}
+df$Time<- df$Time  %>% scale() %>% as.data.frame()
+df$Amount<- df$Amount  %>% scale() %>% as.data.frame()
+
+```
+```{r}
+str(df)
+```
+```{r}
+head(df)
+```
+```{r echo=FALSE}
+# newMWMOTE <- mwmote(df, numInstances = 283823)
+# head(newMWMOTE)
+```
+rbind: combines data frame by rows.
+```{r echo=FALSE}
+# df.newMWMOTE <- rbind(df, newMWMOTE)
+# plotComparison(df, rbind(df, df.newMWMOTE), attrs = names(df)[2:3])
+```
+```{r echo=FALSE}
+# set.seed(1234)
+# train.id <- caTools::sample.split(df.newMWMOTE$Class, SplitRatio = 0.70) 
+# df.newMWMOTE.train <- subset(df.newMWMOTE, train.id)
+# df.newMWMOTE.validate <- subset(df.newMWMOTE, !train.id)
+# 
+# df.newMWMOTE.trainClass <- df.newMWMOTE$Class[train.id]
+# df.newMWMOTE.validateClass <- df.newMWMOTE$Class[!train.id]
+```
+```{r echo=FALSE}
+# is.na(df.newMWMOTE.validateClass) %>% any
+# train.id
+# df.newMWMOTE.train.class
+```
+```{r echo=FALSE}
+# summary(df.newMWMOTE.train$Class)
+# df.newMWMOTE.train[, -Class]
+```
+
+
+```{r echo=FALSE}
+# library(parallel)
+  
+# numCores <- detectCores()
+```
+```{r echo=FALSE}
+# numCores
+```
+```{r echo=FALSE}
+# library(parallel)
+# cl <- makeCluster(2)
+# parLapply(cl, 2:4, sqrt)
+```
+```{r}
+library(unbalanced)
+data(ubIonosphere)
+n<-ncol(ubIonosphere)
+```
+
+
+```{r}
+library(unbalanced)
+df.ubUnder<-ubUnder(X=df[, -31], Y=df$Class, perc = 50,  method = "percPos")
+
+```
+```{r}
+newData<-cbind(df.ubUnder$X, Class = df.ubUnder$Y)
+```
+```{r}
+newData
+```
+```{r}
+summary(newData$Class)
+```
+```{r}
+set.seed(1234)
+train.id <- caTools::sample.split(newData$Class, SplitRatio = 0.70)
+newData.train <- subset(newData, train.id)
+newData.validate <- subset(newData, !train.id)
+
+newData.train.class <- newData$Class[train.id]
+newData.validate.class <- newData$Class[!train.id]
+```
+```{r}
+
+find.optimum.k <- function(k) {
+  predictied <- knn(newData.train[, 1:30], newData.validate[, 1:30], newData.train.class, k = k)
+  confusion.table <- table(predictied, newData.validate.class)
+
+  confusion.matrix <- data.frame(pred_Y = c(confusion.table[2, 2], confusion.table[2, 1]),
+                                 pred_N = c(confusion.table[1, 2], confusion.table[1, 1]),
+                                 row.names = c("Fraud", "No Fraud"))
+  Accuracy <- (confusion.matrix[1, 1] + confusion.matrix[2 ,2])/ sum(confusion.matrix)
+  # Balanced.Accuracy <- ((confusion.matrix[1, 1])/confusion.matrix[1, 1] + confusion.matrix[2, 1]) + ((confusion.matrix[2, 2])/confusion.matrix[1, 2] + confusion.matrix[2, 2]))/2
+  # F1Score <- 2*confusion.matrix[1, 1]/((2*confusion.matrix[1, 1]) + (confusion.matrix[2, 1]) + (confusion.matrix[1, 2]))
+  Sensitivity <- confusion.matrix[1, 1]/sum(confusion.matrix[, 1])
+  Specificity <- confusion.matrix[2, 2]/sum(confusion.matrix[, 2])
+  df.perf <- c(Accuracy=Accuracy, Sensitivity=Sensitivity, Specificity=Specificity)
+  # Precision <- confusion.matrix[1, 1]/(confusion.matrix[1, 1] + confusion.matrix[2, 1])
+  # NegativePedictiveValue <- confusion.matrix[1, 2]/(confusion.matrix[1, 2] + confusion.matrix[2, 2])
+  # FallOut <- confusion.matrix[2, 1]/(confusion.matrix[1, 2] + confusion.matrix[2, 2])
+  # print(k)
+  return(df.perf)
+
+}
+```
+```{r}
+vec.k <- 1: 20
+results <- sapply(vec.k, find.optimum.k)
+results <- apply(results,1,unlist)
+results <- as.data.frame(results)
+results$k <- vec.k
+
+pl <- ggplot(data=results)+geom_line(aes(x=k,y=Accuracy),size=1,color="red")+
+  geom_line(aes(x=k,y=Sensitivity),size=1,color="blue")+
+  geom_line(aes(x=k,y=Specificity),size=1,color="green")+
+  ylab('performance')+
+  theme_bw()
+
+```
+```{r}
+library(plotly)
+ggplotly(pl)
+
+
+```
+```{r echo=FALSE}
+  predictied <- knn(newData.train[, 1:30], newData.validate[, 1:30], newData.train.class, k = 1)
+  confusion.table <- table(predictied, newData.validate.class)
+
+  confusion.matrix <- data.frame(pred_Y = c(confusion.table[2, 2], confusion.table[2, 1]),
+                                 pred_N = c(confusion.table[1, 2], confusion.table[1, 1]),
+                                 row.names = c("Fraud", "No Fraud"))
+
+```
+```{r echo=FALSE}
+  confusion.table 
+
+ 
+
+```
+```{r}
+logistic.model = glm(Class ~., family = binomial, data = newData.train)
+summary(logistic.model)
+```
+```{r}
+pred <- predict(logistic.model, newdata = newData.validate, type = "response")
+perf.table <- table(newData.validate$Class, pred>.1) 
+conf.mat <- data.frame(pred_T=c(perf.table[2,2],perf.table[1,2]), pred_F=c(perf.table[2,1],perf.table[1,1]), row.names = c("act_T","act_F"))
+ACC <-  (conf.mat[1,1]+conf.mat[2,2])/sum(conf.mat)
+Sensitivity <-  conf.mat[1,1] /sum(conf.mat[,1])
+Specificity <-  conf.mat[2,2] / (conf.mat[2,1]+conf.mat[2,2])
+
+df.perf <- data.frame(ACC,Sensitivity,Specificity)
+df.perf 
+```
+```{r}
+library(MASS)
+step <- stepAIC(logistic.model, direction="both", trace=T)
+```
+```{r}
+summary(step)
+```
+```{r}
+logistic_AIC = glm(formula = Class ~ V2 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + 
+    V10 + V11 + V12 + V13 + V14 + V15 + V16 + V17 + V18 + V19 + 
+    V20 + V21 + V22 + V23 + V24 + V25 + V26 + V27 + V28 + Amount,
+    family = binomial, data = newData.validate)
+
+summary(logistic_AIC)
+```
+```{r}
+pred <- predict(logistic_AIC, newdata = newData.validate, type = "response")
+perf.table <- table(newData.validate$Class,pred>.1) 
+conf.mat <- data.frame(pred_T=c(perf.table[2,2],perf.table[1,2]), pred_F=c(perf.table[2,1],perf.table[1,1]), row.names = c("act_T","act_F"))
+ACC <-  (conf.mat[1,1]+conf.mat[2,2])/sum(conf.mat)
+Sensitivity <-  conf.mat[1,1] /sum(conf.mat[,1])
+Specificity <-  conf.mat[2,2] / (conf.mat[2,1]+conf.mat[2,2])
+df.perf <- data.frame(ACC,Sensitivity,Specificity)
+df.perf 
+```
+```{r}
+find.opt.cutoff <- function(cutoff) {
+  
+  perf.table <- table(newData.validate$Class, pred > cutoff)
+  
+  if (ncol(perf.table) == 1) {
+    if (colnames(perf.table) == "TRUE") {
+      perf.table <- cbind(c(0, 0), perf.table)
+    }else{
+      perf.table <- cbind(perf.table, c(0, 0))
+    }
+  }
+  
+  conf.mat <-
+    data.frame(
+      pred_T = c(perf.table[2, 2], perf.table[1, 2]),
+      pred_F = c(perf.table[2, 1], perf.table[1, 1]),
+      row.names = c("act_T", "act_F")
+    )
+  ACC <-  (conf.mat[1, 1] + conf.mat[2, 2]) / sum(conf.mat)
+  Sensitivity <-  conf.mat[1, 1] / sum(conf.mat[, 1])
+  Specificity <-  conf.mat[2, 2] / (conf.mat[2, 1] + conf.mat[2, 2])
+  df.perf <- c(ACC=ACC, Sensitivity=Sensitivity, Specificity=Specificity)
+  df.perf
+}
+
+
+cutoff <- seq(0,1,.1)
+results <- sapply(cutoff, find.opt.cutoff) %>% t %>% data.frame()
+results$cutoff <- cutoff
+
+
+pl <- ggplot(data=results)+geom_line(aes(x=cutoff,y=ACC),size=1,color="red")+
+  geom_line(aes(x=cutoff,y=Sensitivity),size=1,color="blue")+
+  geom_line(aes(x=cutoff,y=Specificity),size=1,color="green")+
+  ylab('performance')+
+  theme_bw()
+
+ggplotly(pl)
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+```{r}
+```
+

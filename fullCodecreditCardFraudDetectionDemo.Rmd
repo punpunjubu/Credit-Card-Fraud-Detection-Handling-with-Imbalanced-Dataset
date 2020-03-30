@@ -12,7 +12,7 @@ library(dplyr)
 library(imbalance)
 library(class)
 ```
-My goal
+My goals
 1. To detect credit card fraud using Machine Learning Algorithms
 2. To create perPos: perUn (50:50 ) of sub sampling  
 3. To classify outcome with Logistic Regression and K-nearest Neighbors Classification

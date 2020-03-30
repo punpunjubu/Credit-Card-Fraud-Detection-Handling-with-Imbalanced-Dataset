@@ -12,13 +12,10 @@ library(dplyr)
 library(imbalance)
 library(class)
 ```
-My Goal is to detect credit cart Fraud 
-Problem is Class imbalance
-Over sampling
--Majority Weighted Minority Oversampling TEchnique
-Under sampling
-SMOTE
-Testing
+My goal
+1. To detect credit card fraud using Machine Learning Algorithms
+2. To create perPos: perUn (50:50 ) of sub sampling  
+3. To classify outcome with Logistic Regression and K-nearest Neighbors Classification
 
 ```{r}
 df <- fread('creditcard.csv',header=T)

@@ -3,7 +3,7 @@ Using Undersampling Technique to dealing with big data.
 
 Please download dataset from https://www.kaggle.com/mlg-ulb/creditcardfraud/download.
 
-Steps
+Steps 🍹
 1. Exploring data.
 2. Checking missing value.
 3. Visualizing Graph.

@@ -41,54 +41,6 @@ str(df)
 ```{r}
 head(df)
 ```
-```{r echo=FALSE}
-# newMWMOTE <- mwmote(df, numInstances = 283823)
-# head(newMWMOTE)
-```
-rbind: combines data frame by rows.
-```{r echo=FALSE}
-# df.newMWMOTE <- rbind(df, newMWMOTE)
-# plotComparison(df, rbind(df, df.newMWMOTE), attrs = names(df)[2:3])
-```
-```{r echo=FALSE}
-# set.seed(1234)
-# train.id <- caTools::sample.split(df.newMWMOTE$Class, SplitRatio = 0.70) 
-# df.newMWMOTE.train <- subset(df.newMWMOTE, train.id)
-# df.newMWMOTE.validate <- subset(df.newMWMOTE, !train.id)
-# 
-# df.newMWMOTE.trainClass <- df.newMWMOTE$Class[train.id]
-# df.newMWMOTE.validateClass <- df.newMWMOTE$Class[!train.id]
-```
-```{r echo=FALSE}
-# is.na(df.newMWMOTE.validateClass) %>% any
-# train.id
-# df.newMWMOTE.train.class
-```
-```{r echo=FALSE}
-# summary(df.newMWMOTE.train$Class)
-# df.newMWMOTE.train[, -Class]
-```
-
-
-```{r echo=FALSE}
-# library(parallel)
-# numCores <- detectCores()
-```
-```{r echo=FALSE}
-# numCores
-```
-```{r echo=FALSE}
-# library(parallel)
-# cl <- makeCluster(2)
-# parLapply(cl, 2:4, sqrt)
-```
-```{r}
-library(unbalanced)
-data(ubIonosphere)
-n<-ncol(ubIonosphere)
-```
-
-
 ```{r}
 library(unbalanced)
 df.ubUnder<-ubUnder(X=df[, -31], Y=df$Class, perc = 50,  method = "percPos")
